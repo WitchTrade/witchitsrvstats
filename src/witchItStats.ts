@@ -5,11 +5,14 @@ import { PlayerOnServer } from './entities/playerOnServer.entity';
 import { Server } from './entities/server.entity';
 import { ServerInfo } from './models/serverinfo.model';
 import { ServerTracker } from './serverTracker';
+import { StatsEvaluator } from './statsEvaluator';
 
 export class WitchItStats {
     private _database: Database;
 
     private _serverTracker: ServerTracker;
+
+    private _statsEvaluator: StatsEvaluator;
 
     private _servers: Server[];
 
@@ -22,6 +25,8 @@ export class WitchItStats {
 
         this._serverTracker = new ServerTracker(this._servers);
 
+        this._statsEvaluator = new StatsEvaluator(this._database);
+
         ns.scheduleJob('*/5 * * * *', async () => {
             // used for timestamps. Always set to full minute
             const date = new Date();
@@ -29,7 +34,8 @@ export class WitchItStats {
 
             // fetch servers and save the connections into the database
             const servers = await this._serverTracker._fetchServerInfos();
-            this._saveConnections(servers, date);
+            await this._saveConnections(servers, date);
+            this._statsEvaluator.evaluateStats();
         });
     }
 
