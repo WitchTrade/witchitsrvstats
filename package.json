@@ -1,0 +1,14 @@
+{
+  "name": "witchitstats",
+  "version": "1.0.0",
+  "description": "Tracks witch it game servers and generates stats",
+  "main": "app.js",
+  "scripts": {
+    "dev": "cd ./src && nodemon ./app.ts",
+    "build": "tsc -p .",
+    "start": "cd ./dist && node ./app.js",
+    "bs": "tsc -p . && cd ./dist && node ./app.js"
+  },
+  "author": "GiyoMoon",
+  "license": "GPLv3"
+}
