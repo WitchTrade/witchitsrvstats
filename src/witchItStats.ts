@@ -35,6 +35,8 @@ export class WitchItStats {
             // fetch servers and save the connections into the database
             const servers = await this._serverTracker._fetchServerInfos();
             await this._saveConnections(servers, date);
+
+            // evalute and create stats
             this._statsEvaluator.evaluateStats();
         });
     }
