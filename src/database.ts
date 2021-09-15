@@ -10,6 +10,11 @@ export class Database {
 
     private _connection: Connection;
 
+    public serverRepo: Repository<Server>;
+    public playerRepo: Repository<Player>;
+    public playerOnServerRepo: Repository<PlayerOnServer>;
+    public statsRepo: Repository<Stats>;
+
     constructor() { }
 
     public async initConnection() {
@@ -28,6 +33,11 @@ export class Database {
 
         // init connection to database
         this._connection = await createConnection(options);
+
+        this.serverRepo = this._connection.getRepository(Server);
+        this.playerRepo = this._connection.getRepository(Player);
+        this.playerOnServerRepo = this._connection.getRepository(PlayerOnServer);
+        this.statsRepo = this._connection.getRepository(Stats);
     }
 
     // getter for the database connection

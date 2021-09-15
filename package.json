@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "cd ./src && nodemon ./app.ts",
     "build": "tsc -p .",
-    "start": "cd ./dist && node ./app.js",
+    "start": "node ./dist/app.js",
     "bs": "tsc -p . && cd ./dist && node ./app.js"
   },
   "author": "GiyoMoon",
