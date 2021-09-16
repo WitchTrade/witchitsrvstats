@@ -93,13 +93,13 @@ export class StatsEvaluator {
 
         for (let i = 24; i >= 1; i--) {
 
-            const playerOnServerValuesByRegion = await this._fetchPlayerOnServerValues(from, 'region', to);
+            const playerOnServerValuesByRegion = await this._fetchPlayerOnServerValues(from, to, 'region');
 
             stats.push(this._calculateAveragePlayerCount(playerOnServerValuesByRegion, `d_playercount_region`, 'region', `eu_${to.getHours()}`, 'eu', 12));
             stats.push(this._calculateAveragePlayerCount(playerOnServerValuesByRegion, `d_playercount_region`, 'region', `hk_${to.getHours()}`, 'hk', 12));
             stats.push(this._calculateAveragePlayerCount(playerOnServerValuesByRegion, `d_playercount_region`, 'region', `us_${to.getHours()}`, 'us', 12));
 
-            const playerOnServerValuesByGameMode = await this._fetchPlayerOnServerValues(from, 'gamemode', to);
+            const playerOnServerValuesByGameMode = await this._fetchPlayerOnServerValues(from, to, 'gamemode');
 
             stats.push(this._calculateAveragePlayerCount(playerOnServerValuesByGameMode, `d_playercount_mode`, 'gamemode', `${this._gameModes.has.key}_${to.getHours()}`, this._gameModes.has.value, 12));
             stats.push(this._calculateAveragePlayerCount(playerOnServerValuesByGameMode, `d_playercount_mode`, 'gamemode', `${this._gameModes.mobi.key}_${to.getHours()}`, this._gameModes.mobi.value, 12));
@@ -108,7 +108,7 @@ export class StatsEvaluator {
             stats.push(this._calculateAveragePlayerCount(playerOnServerValuesByGameMode, `d_playercount_mode`, 'gamemode', `${this._gameModes.fap.key}_${to.getHours()}`, this._gameModes.fap.value, 12));
 
             to.setHours(to.getHours() - 1);
-            from.setHours(to.getHours() - 1);
+            from.setHours(from.getHours() - 1);
         }
 
         from = new Date(this._now);
@@ -119,13 +119,13 @@ export class StatsEvaluator {
         to.setHours(to.getHours() - (to.getHours() % 6), 0, 0, 0);
 
         for (let i = 28; i >= 1; i--) {
-            const playerOnServerValuesByRegion = await this._fetchPlayerOnServerValues(from, 'region', to);
+            const playerOnServerValuesByRegion = await this._fetchPlayerOnServerValues(from, to, 'region');
 
             stats.push(this._calculateAveragePlayerCount(playerOnServerValuesByRegion, `w_playercount_region`, 'region', `eu_${to.getDay()}_${to.getHours()}`, 'eu', 72));
             stats.push(this._calculateAveragePlayerCount(playerOnServerValuesByRegion, `w_playercount_region`, 'region', `hk_${to.getDay()}_${to.getHours()}`, 'hk', 72));
             stats.push(this._calculateAveragePlayerCount(playerOnServerValuesByRegion, `w_playercount_region`, 'region', `us_${to.getDay()}_${to.getHours()}`, 'us', 72));
 
-            const playerOnServerValuesByGameMode = await this._fetchPlayerOnServerValues(from, 'gamemode', to);
+            const playerOnServerValuesByGameMode = await this._fetchPlayerOnServerValues(from, to, 'gamemode');
 
             stats.push(this._calculateAveragePlayerCount(playerOnServerValuesByGameMode, `w_playercount_mode`, 'gamemode', `${this._gameModes.has.key}_${to.getDay()}_${to.getHours()}`, this._gameModes.has.value, 72));
             stats.push(this._calculateAveragePlayerCount(playerOnServerValuesByGameMode, `w_playercount_mode`, 'gamemode', `${this._gameModes.mobi.key}_${to.getDay()}_${to.getHours()}`, this._gameModes.mobi.value, 72));
@@ -134,7 +134,7 @@ export class StatsEvaluator {
             stats.push(this._calculateAveragePlayerCount(playerOnServerValuesByGameMode, `w_playercount_mode`, 'gamemode', `${this._gameModes.fap.key}_${to.getDay()}_${to.getHours()}`, this._gameModes.fap.value, 72));
 
             to.setHours(to.getHours() - 6);
-            from.setHours(to.getHours() - 6);
+            from.setHours(from.getHours() - 6);
         }
 
         this._database.statsRepo.save(stats);
@@ -152,19 +152,20 @@ export class StatsEvaluator {
     // COMMON USED FUNCTION
     // 
 
-    private async _fetchPlayerOnServerValues(from: Date, groupBy?: 'region' | 'gamemode', to?: Date) {
+    private async _fetchPlayerOnServerValues(from: Date, to?: Date, groupBy?: 'region' | 'gamemode') {
         const request = this._database.playerOnServerRepo.createQueryBuilder('playerOnServer')
             .select('time')
             .innerJoin('playerOnServer.server', 'server')
             .addSelect('server.region', 'region')
             .addSelect('server.gamemode', 'gamemode')
-            .where('time > :from', { from: from.toUTCString() });
+            .where('time >= :from', { from: from.toISOString() });
 
         if (to) {
-            request.andWhere('time < :to', { to: to.toUTCString() });
+            request.andWhere('time < :to', { to: to.toISOString() });
         }
 
         if (groupBy) {
+            request.addSelect('count(playerOnServer.id)', 'count');
             request.groupBy(groupBy);
             request.addGroupBy('time');
         }
