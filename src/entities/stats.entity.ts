@@ -3,10 +3,10 @@ import { Entity, Column, PrimaryColumn } from 'typeorm';
 @Entity()
 export class Stats {
     @PrimaryColumn()
-    group: string;
+    statGroup: string;
 
     @PrimaryColumn()
-    key: string;
+    statKey: string;
 
     @Column()
     value: string;

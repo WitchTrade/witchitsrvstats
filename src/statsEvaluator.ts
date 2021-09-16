@@ -70,7 +70,7 @@ export class StatsEvaluator {
     private _getPlayerDistributionFor(playerOnServerValues: any[], group: string, groupBy: 'region' | 'gamemode', key: string, filterBy: string) {
         const datasetLength = playerOnServerValues.length;
         const stat = this._roundToFractions(playerOnServerValues.filter(playerOnServer => playerOnServer[groupBy] === filterBy).length / datasetLength, 3);
-        return { group, key, value: stat.toString() };
+        return { statGroup: group, statKey: key, value: stat.toString() };
     }
 
     private _roundToFractions(value: number, fractionCount: number) {
@@ -145,7 +145,7 @@ export class StatsEvaluator {
         const total = filtered.reduce((a, b) => a + parseInt(b.count, 10), 0);
         const average = Math.round(total / maxValueCount) || 0;
 
-        return { group, key, value: average.toString() };
+        return { statGroup: group, statKey: key, value: average.toString() };
     }
 
     // 
