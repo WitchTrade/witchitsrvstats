@@ -105,54 +105,51 @@ export class StatsEvaluator {
 
             const playerOnServerValuesByRegion = await this._fetchPlayerOnServerValues(from, to, 'region');
 
-            stats.push(this._calculateAveragePlayerCount(playerOnServerValuesByRegion, `d_playercount_region`, 'region', 'eu', 12, 'EU', `${to.getUTCHours()}:00`));
-            stats.push(this._calculateAveragePlayerCount(playerOnServerValuesByRegion, `d_playercount_region`, 'region', 'hk', 12, 'HK', `${to.getUTCHours()}:00`));
-            stats.push(this._calculateAveragePlayerCount(playerOnServerValuesByRegion, `d_playercount_region`, 'region', 'us', 12, 'US', `${to.getUTCHours()}:00`));
+            stats.push(this._calculateAveragePlayerCountFor(playerOnServerValuesByRegion, `d_playercount_region`, 'region', 'eu', 12, 'EU', `${to.getUTCHours()}:00`));
+            stats.push(this._calculateAveragePlayerCountFor(playerOnServerValuesByRegion, `d_playercount_region`, 'region', 'hk', 12, 'HK', `${to.getUTCHours()}:00`));
+            stats.push(this._calculateAveragePlayerCountFor(playerOnServerValuesByRegion, `d_playercount_region`, 'region', 'us', 12, 'US', `${to.getUTCHours()}:00`));
 
             const playerOnServerValuesByGameMode = await this._fetchPlayerOnServerValues(from, to, 'gamemode');
 
-            stats.push(this._calculateAveragePlayerCount(playerOnServerValuesByGameMode, `d_playercount_mode`, 'gamemode', this._gameModes.has.value, 12, this._gameModes.has.value, `${to.getUTCHours()}:00`));
-            stats.push(this._calculateAveragePlayerCount(playerOnServerValuesByGameMode, `d_playercount_mode`, 'gamemode', this._gameModes.mobi.value, 12, this._gameModes.mobi.value, `${to.getUTCHours()}:00`));
-            stats.push(this._calculateAveragePlayerCount(playerOnServerValuesByGameMode, `d_playercount_mode`, 'gamemode', this._gameModes.hah.value, 12, this._gameModes.hah.value, `${to.getUTCHours()}:00`));
-            stats.push(this._calculateAveragePlayerCount(playerOnServerValuesByGameMode, `d_playercount_mode`, 'gamemode', this._gameModes.imp.value, 12, this._gameModes.imp.value, `${to.getUTCHours()}:00`));
-            stats.push(this._calculateAveragePlayerCount(playerOnServerValuesByGameMode, `d_playercount_mode`, 'gamemode', this._gameModes.fap.value, 12, this._gameModes.fap.value, `${to.getUTCHours()}:00`));
+            stats.push(this._calculateAveragePlayerCountFor(playerOnServerValuesByGameMode, `d_playercount_mode`, 'gamemode', this._gameModes.has.value, 12, this._gameModes.has.value, `${to.getUTCHours()}:00`));
+            stats.push(this._calculateAveragePlayerCountFor(playerOnServerValuesByGameMode, `d_playercount_mode`, 'gamemode', this._gameModes.mobi.value, 12, this._gameModes.mobi.value, `${to.getUTCHours()}:00`));
+            stats.push(this._calculateAveragePlayerCountFor(playerOnServerValuesByGameMode, `d_playercount_mode`, 'gamemode', this._gameModes.hah.value, 12, this._gameModes.hah.value, `${to.getUTCHours()}:00`));
+            stats.push(this._calculateAveragePlayerCountFor(playerOnServerValuesByGameMode, `d_playercount_mode`, 'gamemode', this._gameModes.imp.value, 12, this._gameModes.imp.value, `${to.getUTCHours()}:00`));
+            stats.push(this._calculateAveragePlayerCountFor(playerOnServerValuesByGameMode, `d_playercount_mode`, 'gamemode', this._gameModes.fap.value, 12, this._gameModes.fap.value, `${to.getUTCHours()}:00`));
 
             to.setUTCHours(to.getUTCHours() - 1);
             from.setUTCHours(from.getUTCHours() - 1);
         }
 
         from = new Date(this._now);
-        from.setUTCHours(from.getUTCHours() - (from.getUTCHours() % 6), 0, 0, 0);
-        from.setUTCHours(from.getUTCHours() - 6);
+        from.setUTCHours(from.getUTCHours() - (from.getUTCHours() % 2), 0, 0, 0);
+        from.setUTCHours(from.getUTCHours() - 2);
 
         to = new Date(this._now);
-        to.setUTCHours(to.getUTCHours() - (to.getUTCHours() % 6), 0, 0, 0);
+        to.setUTCHours(to.getUTCHours() - (to.getUTCHours() % 2), 0, 0, 0);
 
-        for (let i = 28; i >= 1; i--) {
-            const playerOnServerValuesByRegion = await this._fetchPlayerOnServerValues(from, to, 'region');
+        for (let i = 84; i >= 1; i--) {
+            const playerOnServerValues = await this._fetchPlayerOnServerValues(from, to, 'time');
 
-            stats.push(this._calculateAveragePlayerCount(playerOnServerValuesByRegion, `w_playercount_region`, 'region', 'eu', 72, 'EU', `${this._dayToWeekday[to.getDay()]} ${to.getUTCHours()}:00`));
-            stats.push(this._calculateAveragePlayerCount(playerOnServerValuesByRegion, `w_playercount_region`, 'region', 'hk', 72, 'HK', `${this._dayToWeekday[to.getDay()]} ${to.getUTCHours()}:00`));
-            stats.push(this._calculateAveragePlayerCount(playerOnServerValuesByRegion, `w_playercount_region`, 'region', 'us', 72, 'US', `${this._dayToWeekday[to.getDay()]} ${to.getUTCHours()}:00`));
+            stats.push(this._calculateTotalAveragePlayerCount(playerOnServerValues, `w_playercount`, 84, 'Players', `${this._dayToWeekday[to.getDay()]} ${to.getUTCHours()}:00`));
 
-            const playerOnServerValuesByGameMode = await this._fetchPlayerOnServerValues(from, to, 'gamemode');
-
-            stats.push(this._calculateAveragePlayerCount(playerOnServerValuesByGameMode, `w_playercount_mode`, 'gamemode', this._gameModes.has.value, 72, this._gameModes.has.value, `${this._dayToWeekday[to.getDay()]} ${to.getUTCHours()}:00`));
-            stats.push(this._calculateAveragePlayerCount(playerOnServerValuesByGameMode, `w_playercount_mode`, 'gamemode', this._gameModes.mobi.value, 72, this._gameModes.mobi.value, `${this._dayToWeekday[to.getDay()]} ${to.getUTCHours()}:00`));
-            stats.push(this._calculateAveragePlayerCount(playerOnServerValuesByGameMode, `w_playercount_mode`, 'gamemode', this._gameModes.hah.value, 72, this._gameModes.hah.value, `${this._dayToWeekday[to.getDay()]} ${to.getUTCHours()}:00`));
-            stats.push(this._calculateAveragePlayerCount(playerOnServerValuesByGameMode, `w_playercount_mode`, 'gamemode', this._gameModes.imp.value, 72, this._gameModes.imp.value, `${this._dayToWeekday[to.getDay()]} ${to.getUTCHours()}:00`));
-            stats.push(this._calculateAveragePlayerCount(playerOnServerValuesByGameMode, `w_playercount_mode`, 'gamemode', this._gameModes.fap.value, 72, this._gameModes.fap.value, `${this._dayToWeekday[to.getDay()]} ${to.getUTCHours()}:00`));
-
-            to.setUTCHours(to.getUTCHours() - 6);
-            from.setUTCHours(from.getUTCHours() - 6);
+            to.setUTCHours(to.getUTCHours() - 2);
+            from.setUTCHours(from.getUTCHours() - 2);
         }
 
         this._database.statsRepo.save(stats);
     }
 
-    private _calculateAveragePlayerCount(playerOnServerValues: any[], group: string, groupBy: 'region' | 'gamemode', filterBy: string, maxValueCount: number, dataset: string, label: string) {
+    private _calculateAveragePlayerCountFor(playerOnServerValues: any[], group: string, groupBy: 'region' | 'gamemode', filterBy: string, maxValueCount: number, dataset: string, label: string) {
         const filtered = playerOnServerValues.filter(playerOnServerValue => playerOnServerValue[groupBy] === filterBy);
         const total = filtered.reduce((a, b) => a + parseInt(b.count, 10), 0);
+        const average = Math.round(total / maxValueCount) || 0;
+
+        return { statGroup: group, dataset, label, value: average.toString() };
+    }
+
+    private _calculateTotalAveragePlayerCount(playerOnServerValues: any[], group: string, maxValueCount: number, dataset: string, label: string) {
+        const total = playerOnServerValues.reduce((a, b) => a + parseInt(b.count, 10), 0);
         const average = Math.round(total / maxValueCount) || 0;
 
         return { statGroup: group, dataset, label, value: average.toString() };
@@ -162,7 +159,7 @@ export class StatsEvaluator {
     // COMMON USED FUNCTION
     // 
 
-    private async _fetchPlayerOnServerValues(from: Date, to?: Date, groupBy?: 'region' | 'gamemode') {
+    private async _fetchPlayerOnServerValues(from: Date, to?: Date, groupBy?: 'region' | 'gamemode' | 'time') {
         const request = this._database.playerOnServerRepo.createQueryBuilder('playerOnServer')
             .select('time')
             .innerJoin('playerOnServer.server', 'server')
@@ -177,6 +174,9 @@ export class StatsEvaluator {
         if (groupBy) {
             request.addSelect('count(playerOnServer.id)', 'count');
             request.groupBy(groupBy);
+        }
+
+        if (groupBy && groupBy !== 'time') {
             request.addGroupBy('time');
         }
 
