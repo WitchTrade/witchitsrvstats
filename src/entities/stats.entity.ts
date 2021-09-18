@@ -6,7 +6,10 @@ export class Stats {
     statGroup: string;
 
     @PrimaryColumn()
-    statKey: string;
+    dataset: string;
+
+    @PrimaryColumn()
+    label: string;
 
     @Column()
     value: string;
