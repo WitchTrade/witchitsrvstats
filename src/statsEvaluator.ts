@@ -50,29 +50,24 @@ export class StatsEvaluator {
     // 
 
     private async _evaluatePlayerDistribution() {
-        const aDayAgo = new Date(this._now);
-        aDayAgo.setDate(aDayAgo.getDate() - 1);
-
-        this._savePlayerDistribution((await this._fetchPlayerOnServerValues(aDayAgo)), 'd');
-
         const aWeekAgo = new Date(this._now);
         aWeekAgo.setDate(aWeekAgo.getDate() - 7);
 
-        this._savePlayerDistribution((await this._fetchPlayerOnServerValues(aWeekAgo)), 'w');
+        this._savePlayerDistribution((await this._fetchPlayerOnServerValues(aWeekAgo)));
     }
 
-    private async _savePlayerDistribution(playerOnServerValues: any[], timeRange: 'd' | 'w') {
+    private async _savePlayerDistribution(playerOnServerValues: any[]) {
         const stats: Stats[] = [];
 
-        stats.push(this._getPlayerDistributionFor(playerOnServerValues, `${timeRange}_distribution_region`, 'region', 'eu', 'eu', 'EU'));
-        stats.push(this._getPlayerDistributionFor(playerOnServerValues, `${timeRange}_distribution_region`, 'region', 'hk', 'hk', 'HK'));
-        stats.push(this._getPlayerDistributionFor(playerOnServerValues, `${timeRange}_distribution_region`, 'region', 'us', 'us', 'US'));
+        stats.push(this._getPlayerDistributionFor(playerOnServerValues, `w_distribution_region`, 'region', 'eu', 'eu', 'EU'));
+        stats.push(this._getPlayerDistributionFor(playerOnServerValues, `w_distribution_region`, 'region', 'hk', 'hk', 'HK'));
+        stats.push(this._getPlayerDistributionFor(playerOnServerValues, `w_distribution_region`, 'region', 'us', 'us', 'US'));
 
-        stats.push(this._getPlayerDistributionFor(playerOnServerValues, `${timeRange}_distribution_mode`, 'gamemode', this._gameModes.has.value, this._gameModes.has.key, this._gameModes.has.value));
-        stats.push(this._getPlayerDistributionFor(playerOnServerValues, `${timeRange}_distribution_mode`, 'gamemode', this._gameModes.mobi.value, this._gameModes.mobi.key, this._gameModes.mobi.value));
-        stats.push(this._getPlayerDistributionFor(playerOnServerValues, `${timeRange}_distribution_mode`, 'gamemode', this._gameModes.hah.value, this._gameModes.hah.key, this._gameModes.hah.value));
-        stats.push(this._getPlayerDistributionFor(playerOnServerValues, `${timeRange}_distribution_mode`, 'gamemode', this._gameModes.imp.value, this._gameModes.imp.key, this._gameModes.imp.value));
-        stats.push(this._getPlayerDistributionFor(playerOnServerValues, `${timeRange}_distribution_mode`, 'gamemode', this._gameModes.fap.value, this._gameModes.fap.key, this._gameModes.fap.value));
+        stats.push(this._getPlayerDistributionFor(playerOnServerValues, `w_distribution_mode`, 'gamemode', this._gameModes.has.value, this._gameModes.has.key, this._gameModes.has.value));
+        stats.push(this._getPlayerDistributionFor(playerOnServerValues, `w_distribution_mode`, 'gamemode', this._gameModes.mobi.value, this._gameModes.mobi.key, this._gameModes.mobi.value));
+        stats.push(this._getPlayerDistributionFor(playerOnServerValues, `w_distribution_mode`, 'gamemode', this._gameModes.hah.value, this._gameModes.hah.key, this._gameModes.hah.value));
+        stats.push(this._getPlayerDistributionFor(playerOnServerValues, `w_distribution_mode`, 'gamemode', this._gameModes.imp.value, this._gameModes.imp.key, this._gameModes.imp.value));
+        stats.push(this._getPlayerDistributionFor(playerOnServerValues, `w_distribution_mode`, 'gamemode', this._gameModes.fap.value, this._gameModes.fap.key, this._gameModes.fap.value));
 
         this._database.statsRepo.save(stats);
     }
@@ -131,7 +126,7 @@ export class StatsEvaluator {
         for (let i = 84; i >= 1; i--) {
             const playerOnServerValues = await this._fetchPlayerOnServerValues(from, to, 'time');
 
-            stats.push(this._calculateTotalAveragePlayerCount(playerOnServerValues, `w_playercount`, 84, 'Players', `${this._dayToWeekday[to.getDay()]} ${to.getUTCHours()}:00`));
+            stats.push(this._calculateTotalAveragePlayerCount(playerOnServerValues, `w_playercount`, 24, 'Players', `${this._dayToWeekday[to.getDay()]} ${to.getUTCHours()}:00`));
 
             to.setUTCHours(to.getUTCHours() - 2);
             from.setUTCHours(from.getUTCHours() - 2);
