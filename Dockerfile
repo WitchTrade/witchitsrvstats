@@ -19,6 +19,5 @@ COPY ./package*.json ./
 RUN npm install --only=production
 
 COPY --from=development /usr/src/app/dist ./dist
-COPY .env ./
 
 CMD ["node", "dist/app"]
