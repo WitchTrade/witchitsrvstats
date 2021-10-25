@@ -27,6 +27,8 @@ export class WitchItStats {
 
         this._statsEvaluator = new StatsEvaluator(this._database);
 
+        console.log('Witch It stats script started!');
+
         ns.scheduleJob('*/5 * * * *', async () => {
             // used for timestamps. Always set to full minute
             const date = new Date();
@@ -36,8 +38,11 @@ export class WitchItStats {
             const servers = await this._serverTracker._fetchServerInfos();
             await this._saveConnections(servers, date);
 
-            // evalute and create stats
-            this._statsEvaluator.evaluateStats();
+            if (date.getMinutes() === 0) {
+                await this._removeOldStats(date);
+                // evalute and create stats
+                this._statsEvaluator.evaluateStats();
+            }
         });
     }
 
@@ -75,5 +80,14 @@ export class WitchItStats {
         }
 
         await this._database.playerOnServerRepo.insert(playerOnServers);
+    }
+
+    private async _removeOldStats(date: Date) {
+        const aWeekAgo = new Date(date);
+        aWeekAgo.setDate(aWeekAgo.getDate() - 7);
+        await this._database.playerOnServerRepo.createQueryBuilder('playerOnServer')
+            .delete()
+            .where('time < :aWeekAgo', { aWeekAgo })
+            .execute();
     }
 }
