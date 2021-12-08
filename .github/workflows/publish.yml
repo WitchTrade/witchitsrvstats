@@ -16,7 +16,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v3
         with:
-          images: ghcr.io/witchtrade/witchitstats
+          images: ghcr.io/witchtrade/witchitsrvstats
           tags: |
             type=raw,value={{branch}}-{{sha}}
           flavor: |
