@@ -1,4 +1,3 @@
-import { Server } from './entities/server.entity';
 import { FetchStatus } from './models/fetchstatus.model';
 import { ServerInfo } from './models/serverinfo.model';
 import { SourceServerQuery } from './modules/sourceServerQuery';
@@ -6,25 +5,27 @@ import { SourceServerQuery } from './modules/sourceServerQuery';
 export class ServerTracker {
     private _sourceServerQuery: SourceServerQuery;
 
-    constructor(private _servers: Server[]) {
+    constructor() {
         this._sourceServerQuery = new SourceServerQuery();
     }
 
-    public async _fetchServerInfos() {
+    public async _fetchServerInfos(serverHosts: string[]) {
         let serverInfos: ServerInfo[] = [];
         let finisher: (value: unknown) => void;
         const finished = new Promise((resolve, reject) => {
             finisher = resolve;
         });
         const fetchStatus: FetchStatus = {
-            totalServers: this._servers.length,
+            totalServers: serverHosts.length,
             fetchedServers: 0,
             serversWithPlayers: 0,
             resolvedPlayers: 0,
             finisher
         };
-        for (const server of this._servers) {
-            this._fetchServer(server.address, server.port, fetchStatus, serverInfos, server.name);
+        for (const server of serverHosts) {
+            const host = server.split(':')[0];
+            const port = parseInt(server.split(':')[1]);
+            this._fetchServer(host, port, fetchStatus, serverInfos);
         }
         await finished;
         serverInfos = serverInfos.sort((a, b) => {
@@ -48,13 +49,16 @@ export class ServerTracker {
         return serverInfos;
     }
 
-    private async _fetchServer(ip: string, port: number, fetchStatus: FetchStatus, serverInfos: ServerInfo[], serverName: string) {
-        const serverRes = await this._sourceServerQuery.info(ip, port, 2000);
+    private async _fetchServer(ip: string, port: number, fetchStatus: FetchStatus, serverInfos: ServerInfo[]) {
+        let serverRes = await this._sourceServerQuery.info(ip, port, 2000);
         if (!serverRes) {
-            console.error(`Error for ${ip}:${port} (${serverName})`);
-            fetchStatus.fetchedServers++;
-            this._checkIfFinished(fetchStatus);
-            return;
+            serverRes = await this._sourceServerQuery.info(ip, port, 4000);
+            if (!serverRes) {
+                console.error(`Error for ${ip}:${port}`);
+                fetchStatus.fetchedServers++;
+                this._checkIfFinished(fetchStatus);
+                return;
+            }
         }
         const infos: any = {};
         (serverRes.keywords as string).split(',').forEach(e => {
@@ -71,12 +75,12 @@ export class ServerTracker {
     }
 
     private async _fetchPlayers(ip: string, port: number, serverName: string, fetchStatus: FetchStatus, serverInfos: ServerInfo[]) {
-        let playerRes = await this._sourceServerQuery.players(ip, port, 1000);
+        let playerRes = await this._sourceServerQuery.players(ip, port, 2000);
         if (!playerRes) {
             playerRes = await this._sourceServerQuery.players(ip, port, 2000);
         }
         if (!playerRes) {
-            playerRes = await this._sourceServerQuery.players(ip, port, 2000);
+            playerRes = await this._sourceServerQuery.players(ip, port, 4000);
             if (!playerRes) {
                 fetchStatus.resolvedPlayers++;
                 this._checkIfFinished(fetchStatus);

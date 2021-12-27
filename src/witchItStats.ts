@@ -1,4 +1,6 @@
 import * as ns from 'node-schedule';
+import 'dotenv/config';
+import { queryMaster, REGIONS } from 'steam-server-query';
 import { Database } from './database';
 import { Player } from './entities/player.entity';
 import { PlayerOnServer } from './entities/playerOnServer.entity';
@@ -23,7 +25,7 @@ export class WitchItStats {
 
         this._servers = await this._database.serverRepo.find();
 
-        this._serverTracker = new ServerTracker(this._servers);
+        this._serverTracker = new ServerTracker();
 
         this._statsEvaluator = new StatsEvaluator(this._database);
 
@@ -34,8 +36,11 @@ export class WitchItStats {
             const date = new Date();
             date.setSeconds(0, 0);
 
+            // get all servers with players on it
+            const serverHosts = await queryMaster(process.env.STEAMMASTERSERVER, REGIONS.ALL, 1000, { appid: parseInt(process.env.WITCHITAPPID), empty: true });
+
             // fetch servers and save the connections into the database
-            const servers = await this._serverTracker._fetchServerInfos();
+            const servers = await this._serverTracker._fetchServerInfos(serverHosts);
             await this._saveConnections(servers, date);
 
             if (date.getMinutes() === 0) {
@@ -52,13 +57,17 @@ export class WitchItStats {
         for (const server of servers) {
             const dbServer = this._servers.find(srv => srv.name === server.name);
 
+            if (!dbServer) {
+                console.error(`Failed to find server in database. Server: ${server.name}`);
+                return;
+            }
+
             // This should not happen but if the connection is slow or interrupted, it still can
             // mostly happens to HK servers
             if (!server.players) {
                 console.error(`Failed to get players for ${server.name}`);
                 return;
             }
-
 
             // loop through players and save them in the db if they don't exist
             for (const player of server.players) {
