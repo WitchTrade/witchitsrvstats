@@ -80,6 +80,7 @@ export class WitchItStats {
         }
 
         await this._database.playerOnServerRepo.insert(playerOnServers);
+        this._database.playerOnServerHistoryRepo.insert(playerOnServers);
     }
 
     private async _removeOldStats(date: Date) {
