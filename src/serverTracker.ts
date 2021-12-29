@@ -1,13 +1,8 @@
+import { queryGameServerInfo, queryGameServerPlayer } from 'steam-server-query';
 import { FetchStatus } from './models/fetchstatus.model';
 import { ServerInfo } from './models/serverinfo.model';
-import { SourceServerQuery } from './modules/sourceServerQuery';
 
 export class ServerTracker {
-    private _sourceServerQuery: SourceServerQuery;
-
-    constructor() {
-        this._sourceServerQuery = new SourceServerQuery();
-    }
 
     public async _fetchServerInfos(serverHosts: string[]) {
         let serverInfos: ServerInfo[] = [];
@@ -23,9 +18,7 @@ export class ServerTracker {
             finisher
         };
         for (const server of serverHosts) {
-            const host = server.split(':')[0];
-            const port = parseInt(server.split(':')[1]);
-            this._fetchServer(host, port, fetchStatus, serverInfos);
+            this._fetchServer(server, fetchStatus, serverInfos);
         }
         await finished;
         serverInfos = serverInfos.sort((a, b) => {
@@ -49,12 +42,12 @@ export class ServerTracker {
         return serverInfos;
     }
 
-    private async _fetchServer(ip: string, port: number, fetchStatus: FetchStatus, serverInfos: ServerInfo[]) {
-        let serverRes = await this._sourceServerQuery.info(ip, port, 2000);
+    private async _fetchServer(server: string, fetchStatus: FetchStatus, serverInfos: ServerInfo[]) {
+        let serverRes = await queryGameServerInfo(server, 2000);
         if (!serverRes) {
-            serverRes = await this._sourceServerQuery.info(ip, port, 4000);
+            serverRes = await queryGameServerInfo(server, 4000);
             if (!serverRes) {
-                console.error(`Error for ${ip}:${port}`);
+                console.error(`Error for ${server}`);
                 fetchStatus.fetchedServers++;
                 this._checkIfFinished(fetchStatus);
                 return;
@@ -67,29 +60,28 @@ export class ServerTracker {
         });
         if (parseInt(infos.PlayerCount_i) > 0) {
             fetchStatus.serversWithPlayers++;
-            serverInfos.push({ name: serverRes.name as string, playerCount: parseInt(infos.PlayerCount_i), maxPlayers: serverRes.maxplayers as number, gameMode: infos.GameMode_s, players: null });
-            this._fetchPlayers(ip, port, serverRes.name as string, fetchStatus, serverInfos);
+            serverInfos.push({ name: serverRes.name, playerCount: parseInt(infos.PlayerCount_i), maxPlayers: serverRes.maxPlayers, gameMode: infos.GameMode_s, players: null });
+            this._fetchPlayers(server, serverRes.name, fetchStatus, serverInfos);
         }
         fetchStatus.fetchedServers++;
         this._checkIfFinished(fetchStatus);
     }
 
-    private async _fetchPlayers(ip: string, port: number, serverName: string, fetchStatus: FetchStatus, serverInfos: ServerInfo[]) {
-        let playerRes = await this._sourceServerQuery.players(ip, port, 2000);
+    private async _fetchPlayers(server: string, serverName: string, fetchStatus: FetchStatus, serverInfos: ServerInfo[]) {
+        let playerRes = await queryGameServerPlayer(server, 2000);
         if (!playerRes) {
-            playerRes = await this._sourceServerQuery.players(ip, port, 2000);
+            playerRes = await queryGameServerPlayer(server, 2000);
         }
         if (!playerRes) {
-            playerRes = await this._sourceServerQuery.players(ip, port, 4000);
+            playerRes = await queryGameServerPlayer(server, 4000);
             if (!playerRes) {
+                console.error(`Error getting players for ${server}, ${serverName}`);
                 fetchStatus.resolvedPlayers++;
                 this._checkIfFinished(fetchStatus);
                 return;
             }
         }
-        const players = playerRes.filter(p => p.name).map(p => {
-            return { name: Buffer.from(p.name, 'binary').toString(), playingFor: p.duration };
-        }).sort((a, b) => b.playingFor - a.playingFor);
+        const players = playerRes.players.map(p => p.name).filter(p => p);
         const index = serverInfos.findIndex(s => s.name === serverName);
         serverInfos[index].players = players;
         fetchStatus.resolvedPlayers++;

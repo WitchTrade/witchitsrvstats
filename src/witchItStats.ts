@@ -1,6 +1,6 @@
 import * as ns from 'node-schedule';
 import 'dotenv/config';
-import { queryMaster, REGIONS } from 'steam-server-query';
+import { queryMasterServer, REGIONS } from 'steam-server-query';
 import { Database } from './database';
 import { Player } from './entities/player.entity';
 import { PlayerOnServer } from './entities/playerOnServer.entity';
@@ -37,7 +37,13 @@ export class WitchItStats {
             date.setSeconds(0, 0);
 
             // get all servers with players on it
-            const serverHosts = await queryMaster(process.env.STEAMMASTERSERVER, REGIONS.ALL, 1000, { appid: parseInt(process.env.WITCHITAPPID), empty: true });
+            let serverHosts: string[];
+            try {
+                serverHosts = await queryMasterServer(process.env.STEAMMASTERSERVER, REGIONS.ALL, { appid: parseInt(process.env.WITCHITAPPID), empty: 1 }, 1000);
+            } catch (err) {
+                console.log(err);
+                return;
+            }
 
             // fetch servers and save the connections into the database
             const servers = await this._serverTracker._fetchServerInfos(serverHosts);
@@ -71,12 +77,12 @@ export class WitchItStats {
 
             // loop through players and save them in the db if they don't exist
             for (const player of server.players) {
-                let dbPlayer = await this._database.playerRepo.findOne({ where: { name: player.name } });
+                let dbPlayer = await this._database.playerRepo.findOne({ where: { name: player } });
 
                 // new player! Create a new one in the database
                 if (!dbPlayer) {
                     const newPlayer = new Player();
-                    newPlayer.name = player.name;
+                    newPlayer.name = player;
                     dbPlayer = await this._database.playerRepo.save(newPlayer);
                 }
 

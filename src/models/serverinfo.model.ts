@@ -3,5 +3,5 @@ export class ServerInfo {
     gameMode: string;
     playerCount: number;
     maxPlayers: number;
-    players: { name: string, playingFor: number; }[];
+    players: string[];
 }
