@@ -1,4 +1,4 @@
-import { queryGameServerInfo, queryGameServerPlayer } from 'steam-server-query';
+import { InfoResponse, PlayerResponse, queryGameServerInfo, queryGameServerPlayer } from 'steam-server-query';
 import { FetchStatus } from './models/fetchstatus.model';
 import { ServerInfo } from './models/serverinfo.model';
 
@@ -43,9 +43,9 @@ export class ServerTracker {
     }
 
     private async _fetchServer(server: string, fetchStatus: FetchStatus, serverInfos: ServerInfo[]) {
-        let serverRes = await queryGameServerInfo(server, 2000);
+        let serverRes = await this._fetchInfo(server, 2000);
         if (!serverRes) {
-            serverRes = await queryGameServerInfo(server, 4000);
+            serverRes = await this._fetchInfo(server, 2000);
             if (!serverRes) {
                 console.error(`Error for ${server}`);
                 fetchStatus.fetchedServers++;
@@ -68,12 +68,12 @@ export class ServerTracker {
     }
 
     private async _fetchPlayers(server: string, serverName: string, fetchStatus: FetchStatus, serverInfos: ServerInfo[]) {
-        let playerRes = await queryGameServerPlayer(server, 2000);
+        let playerRes = await this._fetchPlayer(server, 2000);
         if (!playerRes) {
-            playerRes = await queryGameServerPlayer(server, 2000);
+            playerRes = await this._fetchPlayer(server, 2000);
         }
         if (!playerRes) {
-            playerRes = await queryGameServerPlayer(server, 4000);
+            playerRes = await this._fetchPlayer(server, 4000);
             if (!playerRes) {
                 console.error(`Error getting players for ${server}, ${serverName}`);
                 fetchStatus.resolvedPlayers++;
@@ -92,5 +92,21 @@ export class ServerTracker {
         if (fetchStatus.totalServers === fetchStatus.fetchedServers && fetchStatus.serversWithPlayers === fetchStatus.resolvedPlayers) {
             fetchStatus.finisher(null);
         }
+    }
+
+    private async _fetchInfo(server: string, timeout: number): Promise<InfoResponse> {
+        let serverRes: InfoResponse;
+        try {
+            serverRes = await queryGameServerInfo(server, timeout);
+        } catch (err) { }
+        return serverRes;
+    }
+
+    private async _fetchPlayer(server: string, timeout: number): Promise<PlayerResponse> {
+        let serverRes: PlayerResponse;
+        try {
+            serverRes = await queryGameServerPlayer(server, timeout);
+        } catch (err) { }
+        return serverRes;
     }
 }
