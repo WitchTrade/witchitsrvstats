@@ -43,15 +43,14 @@ export class ServerTracker {
     }
 
     private async _fetchServer(server: string, fetchStatus: FetchStatus, serverInfos: ServerInfo[]) {
-        let serverRes = await this._fetchInfo(server, 2000);
-        if (!serverRes) {
-            serverRes = await this._fetchInfo(server, 2000);
-            if (!serverRes) {
-                console.error(`Error for ${server}`);
-                fetchStatus.fetchedServers++;
-                this._checkIfFinished(fetchStatus);
-                return;
-            }
+        let serverRes: InfoResponse;
+        try {
+            serverRes = await queryGameServerInfo(server, 2, 2000);
+        } catch (err) {
+            console.error(`Error for ${server}`);
+            fetchStatus.fetchedServers++;
+            this._checkIfFinished(fetchStatus);
+            return;
         }
         const infos: any = {};
         (serverRes.keywords as string).split(',').forEach(e => {
@@ -68,18 +67,14 @@ export class ServerTracker {
     }
 
     private async _fetchPlayers(server: string, serverName: string, fetchStatus: FetchStatus, serverInfos: ServerInfo[]) {
-        let playerRes = await this._fetchPlayer(server, 2000);
-        if (!playerRes) {
-            playerRes = await this._fetchPlayer(server, 2000);
-        }
-        if (!playerRes) {
-            playerRes = await this._fetchPlayer(server, 4000);
-            if (!playerRes) {
-                console.error(`Error getting players for ${server}, ${serverName}`);
-                fetchStatus.resolvedPlayers++;
-                this._checkIfFinished(fetchStatus);
-                return;
-            }
+        let playerRes: PlayerResponse;
+        try {
+            playerRes = await queryGameServerPlayer(server, 3, [2000, 2000, 4000]);
+        } catch (err) {
+            console.error(`Error getting players for ${server}, ${serverName}`);
+            fetchStatus.resolvedPlayers++;
+            this._checkIfFinished(fetchStatus);
+            return;
         }
         const players = playerRes.players.map(p => p.name).filter(p => p);
         const index = serverInfos.findIndex(s => s.name === serverName);
@@ -92,21 +87,5 @@ export class ServerTracker {
         if (fetchStatus.totalServers === fetchStatus.fetchedServers && fetchStatus.serversWithPlayers === fetchStatus.resolvedPlayers) {
             fetchStatus.finisher(null);
         }
-    }
-
-    private async _fetchInfo(server: string, timeout: number): Promise<InfoResponse> {
-        let serverRes: InfoResponse;
-        try {
-            serverRes = await queryGameServerInfo(server, timeout);
-        } catch (err) { }
-        return serverRes;
-    }
-
-    private async _fetchPlayer(server: string, timeout: number): Promise<PlayerResponse> {
-        let serverRes: PlayerResponse;
-        try {
-            serverRes = await queryGameServerPlayer(server, timeout);
-        } catch (err) { }
-        return serverRes;
     }
 }
