@@ -64,14 +64,14 @@ export class WitchItStats {
             const dbServer = this._servers.find(srv => srv.name === server.name);
 
             if (!dbServer) {
-                console.error(`Failed to find server in database. Server: ${server.name}`);
+                console.error(`Failed to find server in database. Server: ${server.address}, ${server.name}`);
                 return;
             }
 
             // This should not happen but if the connection is slow or interrupted, it still can
             // mostly happens to HK servers
             if (!server.players) {
-                console.error(`Failed to get players for ${server.name}`);
+                console.error(`Failed to get players for ${server.address}, ${server.name}`);
                 return;
             }
 
