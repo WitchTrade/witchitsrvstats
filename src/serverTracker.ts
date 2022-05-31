@@ -57,9 +57,12 @@ export class ServerTracker {
             const keyVal = e.split(':');
             infos[keyVal[0]] = keyVal[1];
         });
-        if (parseInt(infos.PlayerCount_i) > 0) {
+        if ((infos.PlayerCount_i === undefined && serverRes.players > 0) ||
+        parseInt(infos.PlayerCount_i) > 0) {
             fetchStatus.serversWithPlayers++;
-            serverInfos.push({ name: serverRes.name, address: server, playerCount: parseInt(infos.PlayerCount_i), maxPlayers: serverRes.maxPlayers, gameMode: infos.GameMode_s, players: null });
+            serverInfos.push({ name: serverRes.name, address: server, playerCount: infos.PlayerCount_i === undefined
+                ? serverRes.players
+                : parseInt(infos.PlayerCount_i), maxPlayers: serverRes.maxPlayers, gameMode: infos.GameMode_s, players: null });
             this._fetchPlayers(server, serverRes.name, fetchStatus, serverInfos);
         }
         fetchStatus.fetchedServers++;
