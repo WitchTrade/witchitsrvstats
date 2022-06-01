@@ -57,15 +57,27 @@ export class WitchItStats {
         });
     }
 
+    private async _refreshServerArray() {
+        this._servers = await this._database.serverRepo.find();
+    }
+
     private async _saveConnections(servers: ServerInfo[], date: Date) {
         const playerOnServers: PlayerOnServer[] = [];
 
         for (const server of servers) {
-            const dbServer = this._servers.find(srv => srv.name === server.name);
+            let dbServer = this._servers.find(srv => srv.name === server.name && srv.gamemode === server.gameMode);
 
             if (!dbServer) {
-                console.error(`Failed to find server in database. Server: ${server.address}, ${server.name}`);
-                return;
+                const newServer = new Server()
+                newServer.name = server.name
+                newServer.region = server.name.substring(0, 2).toLowerCase()
+                newServer.gamemode = server.gameMode
+                newServer.address = server.address.split(':')[0]
+                newServer.port = parseInt(server.address.split(':')[1])
+                await this._database.serverRepo.insert(newServer)
+                await this._refreshServerArray()
+                dbServer = this._servers.find(srv => srv.name === server.name && srv.gamemode === server.gameMode);
+                console.error(`Inserted new gameserver into database. Server: ${server.address}, ${server.name}, ${server.gameMode}`);
             }
 
             // This should not happen but if the connection is slow or interrupted, it still can
