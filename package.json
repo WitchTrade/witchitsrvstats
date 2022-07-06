@@ -13,8 +13,8 @@
   },
   "dependencies": {
     "dotenv": "^10.0.0",
-    "mysql": "^2.18.1",
     "node-schedule": "^2.1.0",
+    "pg": "^8.7.3",
     "steam-server-query": "^1.1.2",
     "typeorm": "^0.2.41"
   },

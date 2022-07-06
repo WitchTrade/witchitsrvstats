@@ -22,7 +22,7 @@ export class Database {
     public async initConnection() {
         // database options
         const options: ConnectionOptions = {
-            type: 'mysql',
+            type: 'postgres',
             host: process.env.DATABASEHOST,
             port: parseInt(process.env.DATABASEPORT),
             username: process.env.DATABASEUSER,
@@ -30,7 +30,6 @@ export class Database {
             database: 'wistats',
             entities: [Player, Server, PlayerOnServer, PlayerOnServerHistory, Stats],
             synchronize: true,
-            charset: 'utf8mb4_general_ci'
         };
 
         // init connection to database
