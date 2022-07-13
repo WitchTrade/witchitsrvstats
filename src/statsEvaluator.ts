@@ -1,4 +1,6 @@
+import { SelectQueryBuilder } from 'typeorm';
 import { Database } from './database';
+import { PlayerOnServer } from './entities/playerOnServer.entity';
 import { Stats } from './entities/stats.entity';
 
 export class StatsEvaluator {
@@ -53,7 +55,7 @@ export class StatsEvaluator {
         const aWeekAgo = new Date(this._now);
         aWeekAgo.setDate(aWeekAgo.getDate() - 7);
 
-        this._savePlayerDistribution((await this._fetchPlayerOnServerValues(aWeekAgo)));
+        this._savePlayerDistribution(await this._fetchPlayerOnServerValues(aWeekAgo));
     }
 
     private async _savePlayerDistribution(playerOnServerValues: any[]) {
@@ -155,24 +157,49 @@ export class StatsEvaluator {
     // 
 
     private async _fetchPlayerOnServerValues(from: Date, to?: Date, groupBy?: 'region' | 'gamemode' | 'time') {
-        const request = this._database.playerOnServerRepo.createQueryBuilder('playerOnServer')
-            .select('time')
-            .innerJoin('playerOnServer.server', 'server')
-            .addSelect('server.region', 'region')
-            .addSelect('server.gamemode', 'gamemode')
-            .where('time >= :from', { from: from.toISOString() });
+        let request: SelectQueryBuilder<PlayerOnServer>;
+        switch (groupBy) {
+            case undefined:
+                request = this._database.playerOnServerRepo.createQueryBuilder('playerOnServer')
+                    .select('time')
+                    .innerJoin('playerOnServer.server', 'server')
+                    .addSelect('server.region', 'region')
+                    .addSelect('server.gamemode', 'gamemode')
+                    .where('time >= :from', { from: from.toISOString() });
+                break;
+            case 'region':
+                    request = this._database.playerOnServerRepo.createQueryBuilder('playerOnServer')
+                        .select('time')
+                        .innerJoin('playerOnServer.server', 'server')
+                        .addSelect('server.region', 'region')
+                        .addSelect('count(playerOnServer.id)', 'count')
+                        .addGroupBy('region')
+                        .addGroupBy('time')
+                        .where('time >= :from', { from: from.toISOString() });
+                    break;
+            case 'gamemode':
+                request = this._database.playerOnServerRepo.createQueryBuilder('playerOnServer')
+                    .select('time')
+                    .innerJoin('playerOnServer.server', 'server')
+                    .addSelect('server.gamemode', 'gamemode')
+                    .addSelect('count(playerOnServer.id)', 'count')
+                    .addGroupBy('gamemode')
+                    .addGroupBy('time')
+                    .where('time >= :from', { from: from.toISOString() });
+                break;
+            case 'time':
+                    request = this._database.playerOnServerRepo.createQueryBuilder('playerOnServer')
+                        .select('time')
+                        .innerJoin('playerOnServer.server', 'server')
+                        .addSelect('count(playerOnServer.id)', 'count')
+                        .addGroupBy('region')
+                        .addGroupBy('time')
+                        .where('time >= :from', { from: from.toISOString() });
+                    break;
+        }
 
         if (to) {
             request.andWhere('time < :to', { to: to.toISOString() });
-        }
-
-        if (groupBy) {
-            request.addSelect('count(playerOnServer.id)', 'count');
-            request.groupBy(groupBy);
-        }
-
-        if (groupBy && groupBy !== 'time') {
-            request.addGroupBy('time');
         }
 
         return await request.getRawMany();
