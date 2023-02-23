@@ -70,7 +70,7 @@ export class WitchItStats {
             if (!dbServer) {
                 const newServer = new Server()
                 newServer.name = server.name
-                newServer.region = server.name.substring(0, 2).toLowerCase()
+                newServer.region = this._getServerName(server.name)
                 newServer.gamemode = server.gameMode
                 newServer.address = server.address.split(':')[0]
                 newServer.port = parseInt(server.address.split(':')[1])
@@ -108,6 +108,19 @@ export class WitchItStats {
 
         await this._database.playerOnServerRepo.insert(playerOnServers);
         this._database.playerOnServerHistoryRepo.insert(playerOnServers);
+    }
+
+    private _getServerName(name: string) {
+        if (name.startsWith('America')) {
+            return 'us'
+        }
+        if (name.startsWith('Asia')) {
+            return 'hk'
+        }
+        if (name.startsWith('Europe')) {
+            return 'eu'
+        }
+        return name.substring(0, 2).toLowerCase()
     }
 
     private async _removeOldStats(date: Date) {
